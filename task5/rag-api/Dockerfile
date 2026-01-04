@@ -20,7 +20,7 @@ COPY rag/ /app/rag/
 # В docker-compose смонтируем сюда volume
 RUN mkdir -p /app/chroma_db
 
-ENV PORT=8000
+ENV PORT=8002
 
 # Gunicorn как прод-сервер
-CMD ["gunicorn", "-b", "0.0.0.0:8000", "app:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:8002", "app:app"]
