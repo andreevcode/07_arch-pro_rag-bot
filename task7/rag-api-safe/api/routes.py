@@ -16,7 +16,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
 )
-logger = logging.getLogger("rag-api")
+logger = logging.getLogger(__name__)
 
 # ссылка на Flask клиента, чтобы вытаскивать конфиги типа current_mode
 app = cast('RagApp', current_app)
@@ -139,6 +139,7 @@ def safe_prompt_mode():
                     "retriever_chunks_filter": new_retriever_chunks_filter,
                     "retriever_text_cleaner": new_retriever_text_cleaner
                     })
+
 
 @api_bp.route("/prompt", methods=["GET"])
 def get_prompt():

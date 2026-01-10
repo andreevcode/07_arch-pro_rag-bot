@@ -36,6 +36,125 @@ class ChromaRetriever:
         self._top_k = top_k
 
 
+    # ------------------------------------------------------------------
+    # Публичный bulk-retrieval
+    # ------------------------------------------------------------------
+    def retrieve_topk_bulk(
+            self,
+            *,
+            pipeline,
+            questions: list[dict],
+            k: int,
+            include_text: bool = False,
+    ) -> dict:
+        """
+        Возвращает:
+        {
+          "k": int,
+          "results": [{"id": question_id,"results": [ ...items... ]} ... ]
+        }
+        """
+
+        if not (1 <= k <= 50):
+            raise ValueError("k must be in [1..50]")
+        if not questions:
+            raise ValueError("questions must be non-empty")
+
+        qids: list[str] = []
+        texts: list[str] = []
+        for q in questions:
+            if "id" not in q or "question" not in q:
+                raise ValueError("each question must have 'id' and 'question'")
+            qids.append(q["id"])
+            texts.append(q["question"])
+
+        # 1) считаем эмбеддинги
+        # 1) считаем эмбеддинги для ВСЕХ вопросов разом (с нормализацией)
+        embs = self._embedder.encode(
+            texts,
+            normalize_embeddings=True,
+        )
+
+        # SentenceTransformer вернёт numpy array (N x dim), Chroma ждёт list[list[float]]
+        embs = embs.tolist()
+
+        # 2) bulk query по эмбеддингам
+        n_results = k + 3 # запас из-за SAFE filter
+        chroma_collection = self._chroma_client.get_collection(name=self.chroma_collection_name,)
+        chroma_res = chroma_collection.query(
+            query_embeddings=embs,
+            n_results=n_results,
+            include=["documents", "metadatas", "distances"],
+        )
+
+        all_docs = chroma_res.get("documents", [])
+        all_metas = chroma_res.get("metadatas", [])
+        all_dist = chroma_res.get("distances", [])
+
+        out = []
+        for qi, qid in enumerate(qids):
+            items = self._postprocess_one(
+                docs=all_docs[qi] if qi < len(all_docs) else [],
+                metas=all_metas[qi] if qi < len(all_metas) else [],
+                distances=all_dist[qi] if qi < len(all_dist) else [],
+                k=k,
+                pipeline=pipeline,
+                include_text=include_text,
+            )
+            out.append({"id": qid, "include_text": include_text, "results": items})
+
+        return {"k": k, "results": out}
+
+
+    # ------------------------------------------------------------------
+    # Внутренняя обработка одного retrieval-результата (одного вопроса)
+    # ------------------------------------------------------------------
+    def _postprocess_one(
+            self,
+            docs: list[str],
+            metas: list[dict],
+            distances: list[float],
+            *,
+            k: int,
+            pipeline,
+            include_text: bool = False,
+    ) -> list[dict]:
+        """
+        Возвращает list[dict] для одного вопроса:
+          {
+            "rank": int,
+            "distance": float | None,
+            "meta": {SAFE_FIELDS},
+            "text": str
+          }
+        """
+        items: list[dict] = []
+        rank = 0
+        for i, doc in enumerate(docs):
+            meta = self.sanitize_metadata(metas[i] if i < len(metas) else {})
+            chunk_id = meta.get("chunk_id")
+            dist = distances[i] if i < len(distances) else None
+
+            if getattr(pipeline, "retriever_chunks_filter", False) and self.chunk_is_not_safe(doc, chunk_id):
+                continue
+
+            if getattr(pipeline, "retriever_text_cleaner", False):
+                doc = self.clean_bad_words(doc, chunk_id)
+
+            rank += 1
+            item = {
+                "rank": rank,
+                "distance": dist,
+                "meta": meta,
+            }
+            if include_text:
+                item["text"] = doc
+            items.append(item)
+
+            if rank >= k:
+                break
+        return items
+
     def retrieve_context(self, question: str) -> str:
         # b) эмбеддинг
         embedding = self.build_question_embedding(question)

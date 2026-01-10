@@ -6,6 +6,7 @@ from flask import Flask
 import chromadb
 from chromadb.config import Settings
 from api.routes import api_bp
+from api.routes_bulk import api_bulk_bp
 import logging
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer
@@ -13,6 +14,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 from rag.retriever import ChromaRetriever
 from rag.pipeline import RagPipeline
+from rag.bulk_openai_client import BulkOpenAIClient
 
 
 logging.basicConfig(
@@ -50,6 +52,7 @@ if not OPENAI_API_KEY:
 
 class RagApp(Flask):
     openai_client: OpenAI
+    bulk_openai_client: BulkOpenAIClient
     embedder: SentenceTransformer
     tokenizer: AutoTokenizer
     chroma_client: Any
@@ -62,11 +65,17 @@ class RagApp(Flask):
 def create_app():
     app = RagApp(__name__)
     app.register_blueprint(api_bp)
+    app.register_blueprint(api_bulk_bp)
+
     logger.info("Запущен flask")
 
     # OpenAI клиент
     app.openai_client = OpenAI(api_key=OPENAI_API_KEY)
     logger.info("Запущен клиент OpenAI")
+
+    # Bulk OpenAI клиент
+    app.bulk_openai_client = BulkOpenAIClient(app.openai_client)
+    logger.info("Инициализирована bulk обертка клиента OpenAI")
 
     # Эмбеддер + токенизатор
     logger.info("Модель эмбеддингов %s: старт загрузки", EMBEDDING_MODEL_NAME)
