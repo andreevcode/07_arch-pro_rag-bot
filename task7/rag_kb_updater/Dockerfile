@@ -11,6 +11,7 @@ COPY config.py /app/
 COPY domain/ /app/domain/
 COPY jobs/ /app/jobs/
 COPY services/ /app/services/
+COPY _golden /app/_golden
 
 # Папка для базы Chroma
 # В docker-compose смонтируем сюда volume

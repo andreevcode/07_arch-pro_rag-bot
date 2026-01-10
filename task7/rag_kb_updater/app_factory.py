@@ -14,6 +14,10 @@ from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer
 
+from pathlib import Path
+from services.rag_api_safe_client import RagApiSafeClient
+from services.golden_retrieval_runner import GoldenRetrievalRunner
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
@@ -85,16 +89,25 @@ def create_app(config: Config | None = None) -> UpdaterApp:
 
     summary_writer = RunSummaryWriter(cfg.runs_dir)
 
-    job = UpdaterJob(
-        kb_root=cfg.kb_root,
-        chunks_path=cfg.chunks_path,
-        manifest_store=manifest_store,
-        diff_engine=diff_engine,
-        chunker=chunker,
-        index_builder=index_builder,
-        summary_writer=summary_writer,
-        update_strategy=cfg.update_strategy,
+    rag_client = RagApiSafeClient(base_url=cfg.rag_api_safe_url, timeout_s=60.0)
+    golden_runner = GoldenRetrievalRunner(
+        questions_path=Path(cfg.golden_questions_path),
+        logs_dir=Path(cfg.retrieval_logs_dir),
+        client=rag_client,
     )
+
+    job = UpdaterJob(
+            kb_root=cfg.kb_root,
+            chunks_path=cfg.chunks_path,
+            manifest_store=manifest_store,
+            diff_engine=diff_engine,
+            chunker=chunker,
+            index_builder=index_builder,
+            summary_writer=summary_writer,
+            golden_runner=golden_runner,
+            golden_k=cfg.golden_top_k,
+            update_strategy=cfg.update_strategy,
+        )
 
     scheduler = Scheduler(job=job, cron_expr=cfg.sched_cron)
     return UpdaterApp(scheduler=scheduler, job=job, cfg=cfg)

@@ -33,6 +33,11 @@ class Config:
 
     update_strategy: str  # "replace_file" for MVP
 
+    rag_api_safe_url: str
+    golden_questions_path: str
+    retrieval_logs_dir: str
+    golden_top_k: int
+
     @staticmethod
     def from_env() -> "Config":
         return Config(
@@ -57,4 +62,9 @@ class Config:
             sched_cron=_env("SCHED_CRON", "*/1 * * * *"),
             run_on_start=_env_bool("SCHED_RUN_ON_START", "true"),
             update_strategy=_env("UPDATE_STRATEGY", "replace_file"),
+
+            rag_api_safe_url=os.getenv("RAG_API_SAFE_URL", "http://localhost:8002"),
+            golden_questions_path=os.getenv("GOLDEN_QUESTIONS_PATH", "./_golden/golden_questions.jsonl"),
+            retrieval_logs_dir=os.getenv("RETRIEVAL_LOGS_DIR", "./_runs/retrieval_logs"),
+            golden_top_k=int(os.getenv("GOLDEN_TOP_K", "5")),
         )

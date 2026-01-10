@@ -15,8 +15,16 @@ class RunSummaryWriter:
     def write(self, summary: RunSummary) -> Path:
         self._runs_dir.mkdir(parents=True, exist_ok=True)
         payload = {
+            "run_id": summary.run_id,
+            "index_status": summary.index_status,  # INDEX_UPDATED/INDEX_SAME
+
+            # статус выполнения самого апдейта (успех/ошибка)
             "status": summary.status,
             "error": summary.error,
+
+            # считаем сейчас всегда, но затем лучше только если INDEX_UPDATED -> прогон golden retrieval
+            "golden_retrieval": summary.golden_retrieval,
+
             "files": {
                 "added": summary.added_files,
                 "modified": summary.modified_files,
