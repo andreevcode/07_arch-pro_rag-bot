@@ -11,6 +11,8 @@ if TYPE_CHECKING:
 
 import logging
 
+JSON_UTF8 = "application/json; charset=utf-8"
+
 api_bp = Blueprint("api", __name__, url_prefix="/api/rag")
 logging.basicConfig(
     level=logging.INFO,
@@ -41,7 +43,7 @@ def rag_query():
         payload = {"error": "field 'question' is required"}
         return Response(
             json.dumps(payload, ensure_ascii=False),
-            content_type="application/json; charset=utf-8",
+            content_type=JSON_UTF8,
             status=400,
         )
     mode = override_mode or app.pipeline.current_mode
@@ -60,7 +62,7 @@ def rag_query():
         logger.info("Sending back response to POST /api/rag/query, mode: %s, question:  \"%s\"", override_mode, question)
         return Response(
             json.dumps(result, ensure_ascii=False),
-            content_type="application/json; charset=utf-8",
+            content_type=JSON_UTF8,
             status=200,
         )
 
@@ -70,7 +72,7 @@ def rag_query():
 
         return Response(
             json.dumps(payload, ensure_ascii=False),
-            content_type="application/json; charset=utf-8",
+            content_type=JSON_UTF8,
             status=500,
         )
 
@@ -154,7 +156,7 @@ def get_prompt():
         payload = {"error": f"mode must be one of {MODES}"}
         return Response(
             json.dumps(payload, ensure_ascii=False),
-            content_type="application/json; charset=utf-8",
+            content_type=JSON_UTF8,
             status=400
         )
 
@@ -165,7 +167,7 @@ def get_prompt():
 
     return Response(
         json.dumps(payload, ensure_ascii=False),
-        content_type="application/json; charset=utf-8",
+        content_type=JSON_UTF8,
         status=200
     )
 
@@ -184,14 +186,14 @@ def update_prompt():
         payload = {"error": f"mode must be one of {MODES}"}
         return Response(
             json.dumps(payload, ensure_ascii=False),
-            content_type="application/json; charset=utf-8",
+            content_type=JSON_UTF8,
             status=400
         )
     if not instruction_text:
-        payload = {"error": f"field 'prompt' is required"}
+        payload = {"error": "field 'prompt' is required"}
         return Response(
             json.dumps(payload, ensure_ascii=False),
-            content_type="application/json; charset=utf-8",
+            content_type=JSON_UTF8,
             status=400
         )
 
@@ -203,6 +205,6 @@ def update_prompt():
 
     return Response(
         json.dumps(payload, ensure_ascii=False),
-        content_type="application/json; charset=utf-8",
+        content_type=JSON_UTF8,
         status=200
     )
