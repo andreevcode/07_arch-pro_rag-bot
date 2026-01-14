@@ -37,6 +37,10 @@ TEST_QUERIES: List[Dict[str, Any]] = [
             {
                 "rel_doc_id": "tech/rebels/Светлая_сторона_силы.md",
                 "section_path" : "Светлая сторона Тенниса, Светлая сторона Тенниса"
+            },
+            {
+                "rel_doc_id": "tech/rebels/Светлая_сторона_силы.md",
+                "section_path" : "Светлая сторона Тенниса, Теннис"
             }
         ],
     },
