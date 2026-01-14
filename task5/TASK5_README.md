@@ -72,7 +72,7 @@
 3. Создать своего ТГ бота, добавить в него команды:
    - `/change_mode {mode: zero_shot/few_shot/cot}` для смены режима промптинга;
    - `/toggle-safety {safe_prompt: true/false} {safe_prompt: true/false} {safe_prompt: true/false}` для смены режимов безопасности.
-4. Добавить токен бота токен по аналогии с [task5/tg-rag-sw-bot-safe/.env.secrets.example](tg-rag-sw-bot-safe/.env.secrets.example) в файлик `.env.secrets`.
+4. Добавить токен бота по аналогии с [task5/tg-rag-sw-bot-safe/.env.secrets.example](tg-rag-sw-bot-safe/.env.secrets.example) в файлик `.env.secrets`.
 5. Загрузить локально нужную `EMBEDDING_MODEL_NAME` [task5/rag-api/.env](rag-api/.env) заранее, чтобы она не скачивалась при каждом запуске контейнера `rag-api`, например:
     ```shell
     pip install --quiet huggingface_hub

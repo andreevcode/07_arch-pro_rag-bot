@@ -85,7 +85,7 @@
 1. Убедиться, есть каталог [task3/chroma_db](../task3/chroma_db) с нужными коллекциями (см.задание 3).
 2. Получить `OpenAI_API` токен; по аналогии с [task4/rag-api/.env.secrets.example](rag-api/.env.secrets.example) создать файлик `.env.secrets` и добавить туда созданный токен `OpenAI_API`.
 3. Создать своего ТГ бота, добавить в него команду `/change_mode {mode}` для смены режима промптинга.
-4. Добавить токен бота токен по аналогии с [task4/tg-rag-sw-bot/.env.secrets.example](tg-rag-sw-bot/.env.secrets.example) в файлик `.env.secrets`.
+4. Добавить токен бота по аналогии с [task4/tg-rag-sw-bot/.env.secrets.example](tg-rag-sw-bot/.env.secrets.example) в файлик `.env.secrets`.
 5. Загрузить локально нужную `EMBEDDING_MODEL_NAME` [task4/rag-api/.env](rag-api/.env) заранее, чтобы она не скачивалась при каждом запуске контейнера `rag-api`, например:
     ```shell
     pip install --quiet huggingface_hub
