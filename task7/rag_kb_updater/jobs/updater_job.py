@@ -88,15 +88,13 @@ class UpdaterJob:
             summary.chunks_db_upserted = self._index_builder.build_index(changed_files)
             summary.index_size_bytes = self._index_builder.index_size_bytes()
 
-            # 3) обновление manifest
-            self._manifest_store.save(new_manifest)
-
             summary.status = "success"
-            logger.info("KB index updater run finished: run_id=%s", run_id)
+            logger.info("KB index updater run finished successfully: run_id=%s", run_id)
 
-            # 5) golden retrieval — только если индекс реально менялся
-            # if summary.status == "success" and summary.index_status == "INDEX_UPDATED":
-            if summary.status == "success":
+            # 4) golden retrieval — только если индекс реально менялся
+            if summary.status == "success" and summary.index_status == "INDEX_UPDATED":
+            # if summary.status == "success":
+                logger.info("Starting golden retrieval")
                 gr = self._golden_runner.run(run_id=run_id, k=self._golden_k)
                 summary.golden_retrieval = {
                     "k": gr.k,
@@ -107,12 +105,17 @@ class UpdaterJob:
             else:
                 logger.info("Golden retrieval skipped (INDEX_SAME)")
 
+            # 3) Save manifest if only everything went well
+            self._manifest_store.save(new_manifest)
+            logger.info(f"Saving manifest for {run_id}, status={summary.status}, index_status={summary.index_status}")
             return summary
 
         except Exception as e:
             summary.status = "failed"
             summary.error = repr(e)
-            logger.error("KB index updater run failed", exc_info=True)
+            logger.error(
+                f"Updater job index updater run failed, status={summary.status}, manifest didnt updated: index_status={summary.index_status}, run_id={run_id}",
+                exc_info=True)
             return summary
 
         finally:
