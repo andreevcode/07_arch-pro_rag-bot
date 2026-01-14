@@ -110,6 +110,7 @@ def retrieval_topk_bulk():
     retriever = app.retriever  # ChromaRetriever
 
     try:
+        logger.info(f"retrieving {k} results for {len(questions)} questions with topk_bulk query")
         return jsonify(
             retriever.retrieve_topk_bulk(
                 pipeline=pipeline,
@@ -119,6 +120,8 @@ def retrieval_topk_bulk():
             )
         ), 200
     except ValueError as e:
+        logger.error(f"ValueError: {e}")
         return jsonify({"error": str(e)}), 400
     except Exception as e:
+        logger.error(f"Unexpected error: {e}")
         return jsonify({"error": repr(e)}), 500

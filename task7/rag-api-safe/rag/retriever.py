@@ -68,32 +68,39 @@ class ChromaRetriever:
             qids.append(q["id"])
             texts.append(q["question"])
 
-        # 1) считаем эмбеддинги
         # 1) считаем эмбеддинги для ВСЕХ вопросов разом (с нормализацией)
         embs = self._embedder.encode(
             texts,
             normalize_embeddings=True,
         )
-
+        logger.info("retrieve_topk_bulk - embeddings are built")
         # SentenceTransformer вернёт numpy array (N x dim), Chroma ждёт list[list[float]]
         embs = embs.tolist()
 
         # 2) bulk query по эмбеддингам
         n_results = k + 3 # запас из-за SAFE filter
         chroma_collection = self._chroma_client.get_collection(name=self.chroma_collection_name,)
+        logger.info(f"Sending topk={n_results} bulk query to ChromaDb")
+
         chroma_res = chroma_collection.query(
             query_embeddings=embs,
             n_results=n_results,
             include=["documents", "metadatas", "distances"],
         )
-
+        logger.info("retrieve_topk_bulk - got results from ChromaDb")
+        all_embedding_ids = chroma_res.get("ids", [])
         all_docs = chroma_res.get("documents", [])
         all_metas = chroma_res.get("metadatas", [])
         all_dist = chroma_res.get("distances", [])
 
         out = []
+        logger.info(f"retrieve_topk_bulk - start post-processing results with top{k} chunks filter")
+
         for qi, qid in enumerate(qids):
+            logger.info(f"Starting post-processing question {qi+1}/{len(qids)}: {qid}")
             items = self._postprocess_one(
+                qid=qid,
+                embedding_ids=all_embedding_ids[qi] if qi < len(all_embedding_ids) else [],
                 docs=all_docs[qi] if qi < len(all_docs) else [],
                 metas=all_metas[qi] if qi < len(all_metas) else [],
                 distances=all_dist[qi] if qi < len(all_dist) else [],
@@ -111,6 +118,8 @@ class ChromaRetriever:
     # ------------------------------------------------------------------
     def _postprocess_one(
             self,
+            qid: str,
+            embedding_ids: list[str],
             docs: list[str],
             metas: list[dict],
             distances: list[float],
@@ -122,6 +131,7 @@ class ChromaRetriever:
         """
         Возвращает list[dict] для одного вопроса:
           {
+            "embedding_id": str,
             "rank": int,
             "distance": float | None,
             "meta": {SAFE_FIELDS},
@@ -131,7 +141,8 @@ class ChromaRetriever:
         items: list[dict] = []
         rank = 0
         for i, doc in enumerate(docs):
-            meta = self.sanitize_metadata(metas[i] if i < len(metas) else {})
+            embedding_id = embedding_ids[i]
+            meta = self.sanitize_metadata(metas[i] if i < len(metas) else {}, i, qid)
             chunk_id = meta.get("chunk_id")
             dist = distances[i] if i < len(distances) else None
 
@@ -143,6 +154,7 @@ class ChromaRetriever:
 
             rank += 1
             item = {
+                "embedding_id": embedding_id,
                 "rank": rank,
                 "distance": dist,
                 "meta": meta,
@@ -153,6 +165,7 @@ class ChromaRetriever:
 
             if rank >= k:
                 break
+        logger.info(f"Question postprocessing finished: {len(items)} chunks returned")
         return items
 
     def retrieve_context(self, question: str) -> str:
@@ -186,7 +199,7 @@ class ChromaRetriever:
 
         parts = []
         for i, doc in enumerate(docs):
-            meta = self.sanitize_metadata(metas[i]) if i < len(metas) else {}
+            meta = self.sanitize_metadata(metas[i], i) if i < len(metas) else {}
             # SAFE filter
             if app.pipeline.retriever_chunks_filter and self.chunk_is_not_safe(doc, meta.get("chunk_id")):
                 continue
@@ -224,8 +237,12 @@ class ChromaRetriever:
 
 
     @staticmethod
-    def sanitize_metadata(meta: dict) -> dict:
-        return {k: v for k, v in meta.items() if k in SAFE_FIELDS}
+    def sanitize_metadata(meta: dict, chunk_num: int, qid:str ="0") -> dict:
+        try:
+            return {k: v for k, v in meta.items() if k in SAFE_FIELDS}
+        except Exception as e:
+            logger.error(f"sanitize_metadata: {qid}, chunk={chunk_num}, {e}")
+            return {}
 
     def build_question_embedding(self, question: str) -> List[float]:
         """Строит эмбеддинг для текста запроса."""
