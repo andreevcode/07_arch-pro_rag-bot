@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/07_rag_bot.iml" filepath="$PROJECT_DIR$/.idea/07_rag_bot.iml" />
+      <module fileurl="file://$PROJECT_DIR$/task4/rag-api/rag-api.iml" filepath="$PROJECT_DIR$/task4/rag-api/rag-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/task6/rag-api-safe/rag-api-safe_TASK6.iml" filepath="$PROJECT_DIR$/task6/rag-api-safe/rag-api-safe_TASK6.iml" />
+      <module fileurl="file://$PROJECT_DIR$/task7/rag-api-safe/rag-api-safe_TASK7.iml" filepath="$PROJECT_DIR$/task7/rag-api-safe/rag-api-safe_TASK7.iml" />
+      <module fileurl="file://$PROJECT_DIR$/task5/rag-api/rag-api_SAFE.iml" filepath="$PROJECT_DIR$/task5/rag-api/rag-api_SAFE.iml" />
+      <module fileurl="file://$PROJECT_DIR$/task7/rag-monitor/rag-monitor.iml" filepath="$PROJECT_DIR$/task7/rag-monitor/rag-monitor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/task6/rag_kb_updater/rag_kb_updater_TASK6.iml" filepath="$PROJECT_DIR$/task6/rag_kb_updater/rag_kb_updater_TASK6.iml" />
+      <module fileurl="file://$PROJECT_DIR$/task7/rag_kb_updater/rag_kb_updater_TASK7.iml" filepath="$PROJECT_DIR$/task7/rag_kb_updater/rag_kb_updater_TASK7.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/tg-rag-sw-bot-safe.main.iml" filepath="$PROJECT_DIR$/.idea/modules/tg-rag-sw-bot-safe.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/tg-rag-sw-bot.main.iml" filepath="$PROJECT_DIR$/.idea/modules/tg-rag-sw-bot.main.iml" />
+    </modules>
+  </component>
+</project>
